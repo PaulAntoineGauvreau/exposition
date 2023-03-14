@@ -1,88 +1,15 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
-import {FontLoader} from 'three/examples/jsm/loaders/FontLoader.js'
-import {TextGeometry} from 'three/examples/jsm/geometries/TextGeometry.js'
+// import {FontLoader} from 'three/examples/jsm/loaders/FontLoader.js'
+// import {TextGeometry} from 'three/examples/jsm/geometries/TextGeometry.js'
 
 /**
  * Base
  */
 // Debug
 // const gui = new dat.GUI()
-/**
- * Textures
- */
-const textureLoader = new THREE.TextureLoader()
-const matcapTexture = textureLoader.load('textures/matcaps/8.png')
 
-/**
- * Fonts
- */
-const fontLoader = new FontLoader()
-
-fontLoader.load(
-    '/fonts/helvetiker_regular.typeface.json',
-    (font) =>
-    {
-        const textGeometry  = new TextGeometry(
-            'PAG',
-            {
-                font: font,
-                size: .5,
-                height: .2,
-                curveSegments: 5,
-                bevelEnabled: 0.03,
-                bevelThickness: 0.03,
-                bevelSize: 0.02,
-                bevelOffset: 0,
-                bevelSegments: 4
-
-            }
-        )
-
-        // Pour activé la boite invisible autour
-        // textGeometry.computeBoundingBox()
-        // textGeometry.translate(
-        //     - (textGeometry.boundingBox.max.x - 0.2) * 0.5,
-        //     - (textGeometry.boundingBox.max.y  -0.2) * 0.5,
-        //     - (textGeometry.boundingBox.max.z  - 0.03) * 0.5,
-        // )
-
-        const material =  new THREE.MeshMatcapMaterial()
-        material.wireframe = false
-        material.matcap = matcapTexture
-        textGeometry.center();
-        const text = new THREE.Mesh(textGeometry,  material)
-        scene.add(text)
-
-
-        // Créer juste une Géometrie et un seul materiel pour 100 Mesh
-        const donutGeometry = new THREE.TorusBufferGeometry(0.3, 0.2 , 20 , 45)
-        // const donutMaterial =  new THREE.MeshMatcapMaterial()
-
-        for(let i = 0; i < 300; i++) {
-
-            
-            const donut = new THREE.Mesh(donutGeometry,  material)
-
-            // Garder le centre au centre
-            donut.position.x = (Math.random() - 0.5) * 10
-            donut.position.y = (Math.random() - 0.5) * 10
-            donut.position.z = (Math.random() - 0.5) * 10
-
-            donut.rotation.x = Math.random() * Math.PI 
-            donut.rotation.y = Math.random() * Math.PI 
-
-            const scale = Math.random()
-            donut.scale.x = scale
-            donut.scale.y = scale
-            donut.scale.z = scale
-
-            scene.add(donut)
-        }
-
-    }
-)
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -90,22 +17,51 @@ const canvas = document.querySelector('canvas.webgl')
 // Scene
 const scene = new THREE.Scene()
 
-// Axes helper
 
-// const axesHelper =  new THREE.AxesHelper()
-// scene.add(axesHelper)
-
-
+/**
+ * Textures
+ */
+const loadingManager = new THREE.LoadingManager()
+const textureLoader = new THREE.TextureLoader(loadingManager)
+const attendreTexture = textureLoader.load('/images/Attendre.jpg')
+const matcapTexture = textureLoader.load('/textures/matcaps/2.png')
 
 /**
  * Object
  */
-// const cube = new THREE.Mesh(
-//     new THREE.BoxGeometry(1, 1, 1),
-//     new THREE.MeshBasicMaterial()
-// )
 
-// scene.add(cube)
+
+// const geometryWhite = new THREE.BoxGeometry(11.52, 5.76, 0.05)
+// const materialWhite = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+// materialWhite.side = THREE.FrontSide
+// materialWhite.transparent = true
+// const meshWhite = new THREE.Mesh(geometryWhite, materialWhite)
+
+const floor = new THREE.BoxGeometry(2000, 0.02, 2000)
+
+const geometry = new THREE.BoxGeometry(11.52, 5.76, 0.05)
+const peinture = new THREE.MeshBasicMaterial({map: attendreTexture})
+const whiteColor = new THREE.MeshBasicMaterial({color: 'white'})
+const materialMatCap =  new THREE.MeshMatcapMaterial()
+materialMatCap.matcap = matcapTexture
+
+const material =  [
+    whiteColor,
+    whiteColor,
+    whiteColor,
+    whiteColor,
+    peinture,
+    whiteColor,
+]
+ 
+material.transparent = true
+material.side = THREE.BackSide
+
+const mesh = new THREE.Mesh(geometry, material)
+const meshFloor = new THREE.Mesh(floor, materialMatCap)
+mesh.position.y = 3
+
+scene.add(mesh,meshFloor)
 
 /**
  * Sizes
@@ -134,11 +90,11 @@ window.addEventListener('resize', () =>
  * Camera
  */
 // Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.x = 1
-camera.position.y = 1
-camera.position.z = 2
-// camera.lookAt(text.position)
+const camera = new THREE.PerspectiveCamera(60, sizes.width / sizes.height, 1, 1000)
+camera.position.x = 0
+camera.position.y = 1.5
+camera.position.z = 20
+// camera.lookAt(mesh.position)
 
 
 
@@ -147,6 +103,11 @@ scene.add(camera)
 // Controls
 const controls = new OrbitControls(camera, canvas)
 controls.enableDamping = true
+controls.maxDistance = 100
+controls.enablePan = false
+controls.maxPolarAngle = Math.PI / 2 - 0.085
+controls.update();
+// controls.minPolarAngle = Math.Pi * .5
 
 /**
  * Renderer
@@ -177,3 +138,7 @@ const tick = () =>
 }
 
 tick()
+
+mesh.addEventListener('mouseover', () => {
+    console.log('musique')
+})
